@@ -1,5 +1,5 @@
-SITEURL=dev.chat.accountingtech.co
+SITEURL=stage.dev.accountingtech.co
 GITHUBREPO=git@github.com/Admin-Nexxess/openai-web-client.git
-GITBRANCH=dev.chat
-NODEPORT=3001
+GITBRANCH=stage.chat
+NODEPORT=3002
 OWNEREMAIL=ronnie@alphabethouse.com
