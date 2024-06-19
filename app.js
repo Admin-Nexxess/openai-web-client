@@ -1,5 +1,6 @@
 require('dotenv').config();
 const APP_PORT = process.env.NODEPORT || 3000;
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 
 const express = require('express');
 const bodyParser = require('body-parser');
@@ -14,27 +15,39 @@ app.get('/', function (request, response, next) {
     response.sendFile('./views/index.html', { root: __dirname });
   });
 
-app.post('/chat', async (req, res) => {
-    const userInput = req.body.message;
-    const apiKey = 'YOUR_OPENAI_API_KEY';
+console.log ("OPENAI_API_KEY", OPENAI_API_KEY);
+
+app.post('/webhook', async (req, res) => {
+    const user_input = req.body.message;
 
     try {
-        const response = await axios.post('https://api.openai.com/v1/engines/davinci-codex/completions', {
-            prompt: userInput,
-            max_tokens: 150
+        console.log("Received a request: ", req.body);
+
+        const response = await axios.post('https://api.openai.com/v1/chat/completions', {
+            model: 'gpt-3.5-turbo-0301',
+            messages: [{ role: 'user', content: user_input }]
         }, {
             headers: {
-                'Authorization': `Bearer ${apiKey}`,
+                'Authorization': `Bearer ` + OPENAI_API_KEY,
                 'Content-Type': 'application/json'
             }
         });
 
-        res.json({ response: response.data.choices[0].text });
+        console.log("OpenAI response: ", response.data.choices[0].message.content);
+
+        res.status(200).json({"response": response.data.choices[0].message.content});
     } catch (error) {
-        console.error(error);
-        res.status(500).send('Error connecting to OpenAI API');
+        console.error("Error communicating with OpenAI: ", error.response ? error.response.data : error.message);
+        
+        // Improved error response to client
+        res.status(500).json({
+            error: "Error communicating with OpenAI",
+            details: error.response ? error.response.data : error.message
+        });
     }
 });
+
+
 
 app.listen(APP_PORT, () => {
     console.log(`Server is running at http://localhost:${APP_PORT}`);
