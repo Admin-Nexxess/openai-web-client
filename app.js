@@ -25,7 +25,11 @@ app.post('/webhook', async (req, res) => {
 
         const response = await axios.post('https://api.openai.com/v1/chat/completions', {
             model: 'gpt-3.5-turbo-0301',
-            messages: [{ role: 'user', content: user_input }]
+            messages: [
+        {
+          role: 'system',
+          content: 'You are an accounting assistant. Provide helpful accounting advice and answer questions related to accounting practices, financial statements, tax regulations, and bookkeeping.'
+        },{ role: 'user', content: user_input }]
         }, {
             headers: {
                 'Authorization': `Bearer ` + OPENAI_API_KEY,
