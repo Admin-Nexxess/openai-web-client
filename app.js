@@ -52,6 +52,37 @@ app.post('/webhook', async (req, res) => {
 });
 
 
+async function processChat (prompt, response) {
+    const data = {
+        method: "log_chat",
+        prompt: prompt,
+        response: response
+    }
+
+    try {
+        console.log("Received a request: ", data);
+
+        const response = await axios.post('https://www.zohoapis.com/creator/custom/nexxsuite/processChat?publickey=ng1QsE2nD4mUHsRtFg8rM5ppG', {
+            data: data
+
+        }, {
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        console.log("Zoho Creator response: ", response);
+
+        // res.status(200).json({"response": response});
+    } catch (error) {
+        console.error("Error communicating with Zoho Creator: ", error.response ? error.response.data : error.message);
+        // Improved error response to client
+        res.status(500).json({
+            error: "Error communicating with Zoho Creator",
+            details: error.response ? error.response.data : error.message
+        });
+    }
+}
+
 
 app.listen(APP_PORT, () => {
     console.log(`Server is running at http://localhost:${APP_PORT}`);
