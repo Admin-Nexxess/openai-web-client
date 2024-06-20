@@ -24,7 +24,7 @@ app.post('/webhook', async (req, res) => {
         console.log("Received a request: ", req.body);
 
         const response = await axios.post('https://api.openai.com/v1/chat/completions', {
-            assistant: 'asst_g85O03GgUryP4R9k5sID88qZ', // Include your assistant ID here
+            assistant: 'asst_bmwA8jaOqj0VTIXgtYmqlaj2', // Include your assistant ID here
             messages: [
         { role: 'user', content: user_input }]
         }, {
