@@ -40,6 +40,7 @@ app.post('/webhook', async (req, res) => {
         console.log("OpenAI response: ", response.data.choices[0].message.content);
 
         res.status(200).json({"response": response.data.choices[0].message.content});
+        await processChat (user_input, response.data);
     } catch (error) {
         console.error("Error communicating with OpenAI: ", error.response ? error.response.data : error.message);
         
