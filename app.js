@@ -1,6 +1,8 @@
 require('dotenv').config();
 const APP_PORT = process.env.NODEPORT || 3000;
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+const ZOHO_CREATOR_PROCESS_CHAT_API_KEY = process.env.ZOHO_CREATOR_PROCESS_CHAT_API_KEY;
+const ZOHO_CREATOR_RETURN_REQUEST_API_KEY = process.env.ZOHO_CREATOR_RETURN_REQUEST_API_KEY;
 
 const express = require('express');
 const bodyParser = require('body-parser');
@@ -21,10 +23,11 @@ app.post('/webhook', async (req, res) => {
     const user_input = req.body.message;
 
     try {
-        console.log("Received a request: ", req.body);
+        // console.log("Received a request: ", req.body);
 
+        //             assistant: 'asst_bmwA8jaOqj0VTIXgtYmqlaj2', // Include your assistant ID here
         const response = await axios.post('https://api.openai.com/v1/chat/completions', {
-            assistant: 'asst_bmwA8jaOqj0VTIXgtYmqlaj2', // Include your assistant ID here
+            model: 'gpt-3.5-turbo-0301',
             messages: [
         { role: 'user', content: user_input }]
         }, {
@@ -34,10 +37,10 @@ app.post('/webhook', async (req, res) => {
             }
         });
 
-        console.log("OpenAI response: ", response.data.choices[0].message.content);
+        // console.log("OpenAI response: ", response.data.choices[0].message.content);
 
         res.status(200).json({"response": response.data.choices[0].message.content});
-        await processChat (user_input, response.data);
+        await processChat (user_input, response);
     } catch (error) {
         console.error("Error communicating with OpenAI: ", error.response ? error.response.data : error.message);
         
@@ -52,23 +55,24 @@ app.post('/webhook', async (req, res) => {
 
 async function processChat (prompt, response) {
     const data = {
-        method: "log_chat",
-        prompt: prompt,
-        response: response
+            "method": "log_chat",
+            "prompt": prompt,
+            "response": response.data
     }
-
     try {
-        console.log("Received a request: ", data);
+        console.log("Received a request: ", JSON.stringify(data));
 
-        const response = await axios.post('https://www.zohoapis.com/creator/custom/nexxsuite/processChat?publickey=ng1QsE2nD4mUHsRtFg8rM5ppG', {
+        custom_api_process_chat = "https://www.zohoapis.com/creator/custom/nexxsuite/processChat?publickey=" + ZOHO_CREATOR_PROCESS_CHAT_API_KEY;
+        custom_api_return_request = "https://www.zohoapis.com/creator/custom/nexxsuite/DevReturnRequest?publickey=" + ZOHO_CREATOR_RETURN_REQUEST_API_KEY;
+
+        const zoho_creator_response = await axios.post(custom_api_process_chat, {
             data: data
-
         }, {
             headers: {
                 'Content-Type': 'application/json'
             }
         });
-        console.log("Zoho Creator response: ", response);
+        console.log("Zoho Creator response: ", zoho_creator_response.data);
 
         // res.status(200).json({"response": response});
     } catch (error) {
