@@ -4,7 +4,7 @@ document.getElementById('send-button').addEventListener('click', function() {
     document.getElementById('user-input').value = '';
 
 
-    fetch('/webhook', {
+    fetch('/chat', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'

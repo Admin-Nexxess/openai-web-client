@@ -1,12 +1,14 @@
 require('dotenv').config();
 const APP_PORT = process.env.NODEPORT || 3000;
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
-const ZOHO_CREATOR_PROCESS_CHAT_API_KEY = process.env.ZOHO_CREATOR_PROCESS_CHAT_API_KEY;
-const ZOHO_CREATOR_RETURN_REQUEST_API_KEY = process.env.ZOHO_CREATOR_RETURN_REQUEST_API_KEY;
+// const ZOHO_CREATOR_PROCESS_CHAT_API_KEY = process.env.ZOHO_CREATOR_PROCESS_CHAT_API_KEY;
+// const ZOHO_CREATOR_RETURN_REQUEST_API_KEY = process.env.ZOHO_CREATOR_RETURN_REQUEST_API_KEY;
 
 const express = require('express');
 const bodyParser = require('body-parser');
 const axios = require('axios');
+const zoho_creator = require('./functions/zoho_creator.js')
+const system_prompts = require('./functions/system_prompts.json')
 const app = express();
 // const port = 3000;
 
@@ -27,7 +29,7 @@ app.post('/webhook', async (req, res) => {
 
         //             assistant: 'asst_bmwA8jaOqj0VTIXgtYmqlaj2', // Include your assistant ID here
         const response = await axios.post('https://api.openai.com/v1/chat/completions', {
-            model: 'gpt-3.5-turbo-0301',
+            model: 'gpt-4',
             messages: [
         { role: 'user', content: user_input }]
         }, {
@@ -40,7 +42,7 @@ app.post('/webhook', async (req, res) => {
         // console.log("OpenAI response: ", response.data.choices[0].message.content);
 
         res.status(200).json({"response": response.data.choices[0].message.content});
-        await processChat (user_input, response);
+        await zoho_creator.processChat (user_input, response);
     } catch (error) {
         console.error("Error communicating with OpenAI: ", error.response ? error.response.data : error.message);
         
@@ -52,38 +54,60 @@ app.post('/webhook', async (req, res) => {
     }
 });
 
+app.post('/chat', async (req, res) => {
+    const user_input = req.body.message;
 
-async function processChat (prompt, response) {
-    const data = {
-            "method": "log_chat",
-            "prompt": prompt,
-            "response": response.data
-    }
     try {
-        console.log("Received a request: ", JSON.stringify(data));
-
-        custom_api_process_chat = "https://www.zohoapis.com/creator/custom/nexxsuite/processChat?publickey=" + ZOHO_CREATOR_PROCESS_CHAT_API_KEY;
-        custom_api_return_request = "https://www.zohoapis.com/creator/custom/nexxsuite/DevReturnRequest?publickey=" + ZOHO_CREATOR_RETURN_REQUEST_API_KEY;
-
-        const zoho_creator_response = await axios.post(custom_api_process_chat, {
-            data: data
-        }, {
-            headers: {
-                'Content-Type': 'application/json'
-            }
+      const openai = axios.create({
+        baseURL: 'https://api.openai.com/v1',
+        headers: {
+          'Authorization': `Bearer ${OPENAI_API_KEY}`,
+          'Content-Type': 'application/json'
+        }
+      });
+  
+      const systemMessage = {
+        role: 'system',
+        content: system_prompts.Setup
+      };
+  
+      const conversationHistory = [
+        systemMessage,
+      ];
+  
+      const newUserMessage = {
+        role: 'user',
+        content: user_input
+      };
+  
+      conversationHistory.push(newUserMessage);
+      console.log(":91 conversationHistory", conversationHistory)
+  
+      async function getOpenAIResponse(messages) {
+        const response = await openai.post('/chat/completions', {
+          model: 'gpt-4',
+          messages: messages
         });
-        console.log("Zoho Creator response: ", zoho_creator_response.data);
-
-        // res.status(200).json({"response": response});
+        return response.data.choices[0].message.content;
+      }
+  
+      const response_text = await getOpenAIResponse(conversationHistory);
+      console.log('OpenAI response:', response_text);
+      conversationHistory.push({ role: 'assistant', content: response_text });
+  
+      res.status(200).json({"response": response_text});
+      await zoho_creator.processChat (user_input, response);
     } catch (error) {
-        console.error("Error communicating with Zoho Creator: ", error.response ? error.response.data : error.message);
-        // Improved error response to client
-        res.status(500).json({
-            error: "Error communicating with Zoho Creator",
-            details: error.response ? error.response.data : error.message
-        });
+      console.error("Error communicating with OpenAI: ", error.response ? error.response.data : error.message);
+      res.status(500).json({
+        error: "Error communicating with OpenAI",
+        details: error.response ? error.response.data : error.message
+      });
     }
-}
+  });
+  
+
+
 
 
 app.listen(APP_PORT, () => {
