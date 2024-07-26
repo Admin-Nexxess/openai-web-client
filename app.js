@@ -83,11 +83,13 @@ app.post('/chat', async (req, res) => {
       conversationHistory.push(newUserMessage);
       console.log(":91 conversationHistory", conversationHistory)
   
+      var full_response;
       async function getOpenAIResponse(messages) {
         const response = await openai.post('/chat/completions', {
           model: 'gpt-4',
           messages: messages
         });
+        full_response = response;
         return response.data.choices[0].message.content;
       }
   
@@ -96,7 +98,7 @@ app.post('/chat', async (req, res) => {
       conversationHistory.push({ role: 'assistant', content: response_text });
   
       res.status(200).json({"response": response_text});
-      await zoho_creator.processChat (user_input, response);
+      await zoho_creator.processChat (user_input, full_response);
     } catch (error) {
       console.error("Error communicating with OpenAI: ", error.response ? error.response.data : error.message);
       res.status(500).json({
