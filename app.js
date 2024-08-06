@@ -1,23 +1,27 @@
 require('dotenv').config();
 const APP_PORT = process.env.NODEPORT || 3000;
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+const cors = require('cors');
 // const ZOHO_CREATOR_PROCESS_CHAT_API_KEY = process.env.ZOHO_CREATOR_PROCESS_CHAT_API_KEY;
 // const ZOHO_CREATOR_RETURN_REQUEST_API_KEY = process.env.ZOHO_CREATOR_RETURN_REQUEST_API_KEY;
 
 const express = require('express');
 const bodyParser = require('body-parser');
 const axios = require('axios');
+const showdown = require('showdown');
 const zoho_creator = require('./functions/zoho_creator.js')
-const system_prompts = require('./functions/system_prompts.json')
 const app = express();
 // const port = 3000;
 
+app.use(cors());
 app.use(bodyParser.json());
 app.use(express.static('public'));
 
 app.get('/', function (request, response, next) {
     response.sendFile('./views/index.html', { root: __dirname });
+    // response.sendFile('./views/chat.html', { root: __dirname });
   });
+
 
 console.log ("OPENAI_API_KEY", OPENAI_API_KEY);
 
@@ -40,8 +44,10 @@ app.post('/webhook', async (req, res) => {
         });
 
         // console.log("OpenAI response: ", response.data.choices[0].message.content);
-
-        res.status(200).json({"response": response.data.choices[0].message.content});
+        response_message = response.data.choices[0].message.content;
+        converter = new showdown.Converter();
+        message_html = converter.makeHtml(response_message);
+        res.status(200).json({"response": message_html});
         await zoho_creator.processChat (user_input, response);
     } catch (error) {
         console.error("Error communicating with OpenAI: ", error.response ? error.response.data : error.message);
@@ -96,8 +102,9 @@ app.post('/chat', async (req, res) => {
       const response_text = await getOpenAIResponse(conversationHistory);
       console.log('OpenAI response:', response_text);
       conversationHistory.push({ role: 'assistant', content: response_text });
-  
-      res.status(200).json({"response": response_text});
+      converter = new showdown.Converter();
+      message_html = converter.makeHtml(response_text);
+      res.status(200).json({"response": message_html});
       await zoho_creator.processChat (user_input, full_response);
     } catch (error) {
       console.error("Error communicating with OpenAI: ", error.response ? error.response.data : error.message);
