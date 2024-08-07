@@ -2,18 +2,25 @@ const axios = require('axios');
 const ZOHO_CREATOR_PROCESS_CHAT_API_KEY = process.env.ZOHO_CREATOR_PROCESS_CHAT_API_KEY;
 const ZOHO_CREATOR_RETURN_REQUEST_API_KEY = process.env.ZOHO_CREATOR_RETURN_REQUEST_API_KEY;
 
-async function processChat (prompt, response) {
+async function processChat(prompt, response) {
     const data = {
-            "method": "log_chat",
-            "prompt": prompt,
-            "response": response.data
+        "method": "log_chat",
+        "prompt": prompt,
+        "response": {
+            "choices": [
+                {
+                    "message": {
+                        "content": response
+                    }
+                }
+            ]
+        }
     }
     try {
-        console.log("Received a request: ", JSON.stringify(data));
+        const custom_api_process_chat = "https://www.zohoapis.com/creator/custom/nexxsuite/processChat?publickey=" + ZOHO_CREATOR_PROCESS_CHAT_API_KEY;
 
-        custom_api_process_chat = "https://www.zohoapis.com/creator/custom/nexxsuite/processChat?publickey=" + ZOHO_CREATOR_PROCESS_CHAT_API_KEY;
-        // custom_api_return_request = "https://www.zohoapis.com/creator/custom/nexxsuite/DevReturnRequest?publickey=" + ZOHO_CREATOR_RETURN_REQUEST_API_KEY;
-
+        console.log('custom_api_process_chat', custom_api_process_chat);
+        console.log('data', data);
         const zoho_creator_response = await axios.post(custom_api_process_chat, {
             data: data
         }, {
@@ -27,15 +34,12 @@ async function processChat (prompt, response) {
     } catch (error) {
         console.error("Error communicating with Zoho Creator: ", error.response ? error.response.data : error.message);
         // Improved error response to client
-        res.status(500).json({
+        response.status(500).json({
             error: "Error communicating with Zoho Creator",
             details: error.response ? error.response.data : error.message
         });
     }
 }
-
-
-
 module.exports = {
     processChat
-  };
+};

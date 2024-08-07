@@ -5,14 +5,39 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ChatGPT Web App</title>
     <link rel="stylesheet" href="css/styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script type="text/javascript" src="https://bot.insertchat.com/widgets/chatbot.js" async></script>
+    <script>
+    ICG_BOT_ID = 'e2db8333-db12-45f1-bab8-ba4343212f01';
+    ICG_BOT_TYPE = 'window';
+    ICG_BOT_HEIGHT = 750;
+    ICG_BOT_BG_COLOR = '#fff';
+    ICG_BOT_AUTOFOCUS = false;
+    ICG_BOT_OVERRIDE_OPENER = '';
+    ICG_USER_ID = '';
+    ICG_USER_EMAIL = '';
+    ICG_USER_FIRSTNAME = '';
+    ICG_USER_LASTNAME = '';
+    ICG_USER_TAGS = [];
+    ICG_USER_METADATA = {};
+
+    window.addEventListener("message", (event) => {
+        const data = JSON.parse(event.data.data);
+        axios.post('/log', data.data)
+        .then(function (res) {
+          console.log('data', res.data)
+        })
+        .catch(function (err) {
+            console.log('error', err)
+        });
+      });
+
+      </script>
 </head>
 <body>
   <div id="chat-container">
-    <div id="chat-box"></div>
-    <div id="input-container">
-        <input type="text" id="user-input" placeholder="Type your message...">
-        <button id="send-button">Send</button>
+    <div id="my-ai-chatbot"></div>
     </div>
-    <script src="js/script.js"></script>
+    <!-- <script src="js/script.js"></script> -->
 </body>
 </html>
